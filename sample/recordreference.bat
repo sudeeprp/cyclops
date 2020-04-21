@@ -1,1 +1,1 @@
-lizard legacy.py >reference-report.txt
+lizard legacy.py -o reference-report.csv

@@ -1,66 +1,30 @@
 import sys
+import csv
 
 
 COMPLEXITY_COLUMN = 'complexity'
 METHOD_COLUMN = 'method_location'
 
 
-def extract_column_map(heading_row_text):
-    column_map = {}
-    headings = heading_row_text.split()
-    try:
-        column_map[COMPLEXITY_COLUMN] = headings.index('CCN')
-        column_map[METHOD_COLUMN] = headings.index('location')
-    except ValueError:
-        column_map = {}
-    return column_map
+def lizard_fields_to_function_complexity(fields):
+    EXPECTED_COLS_IN_CSV = 11
+    FUNC_WITH_PAR_POS_IN_CSV = 8
+    COMPLEXITY_POS_IN_CSV = 1
+    complexity_map = {}
+
+    assert (len(fields) == EXPECTED_COLS_IN_CSV), f'Unexpected CSV:\n{fields}'
+
+    func_with_params = fields[FUNC_WITH_PAR_POS_IN_CSV]
+    complexity_map[func_with_params] = int(fields[COMPLEXITY_POS_IN_CSV])
+    return complexity_map
 
 
-def method_locator(method_col):
-    method_components = method_col.split('@')
-    filename = ''
-    if len(method_components) >= 3:
-        filename = method_components[2]
-    return filename + '/' + method_components[0]
-
-
-def extract_complexity(method_line, column_map):
-    method_descriptors = method_line.split()
-    try:
-        method_location = method_locator(method_descriptors[column_map[METHOD_COLUMN]])
-        complexity = int(method_descriptors[column_map[COMPLEXITY_COLUMN]])
-    except (ValueError, IndexError):
-        method_location = None
-        complexity = 0
-    return method_location, complexity
-
-
-def record_method(dict, method_entry, complexity_number):
-    def compose_method_serial(method, serial):
-        return method + '/' + str(serial)
-    if method_entry is not None:
-        trial_number = 1
-        while compose_method_serial(method_entry, trial_number) in dict:
-            trial_number += 1
-        dict[compose_method_serial(method_entry, trial_number)] = complexity_number
-
-
-def map_methods_complexity(report_txt_filename):
-    column_map = []
+def fields_to_complexity_map(parsed_lines):
     complexity_dict = {}
-    with open(report_txt_filename, 'r') as report:
-        for line in report:
-            bare_line = line.strip()
-            if len(bare_line) == 0:
-                pass
-            elif bare_line[0] == '=':
-                column_map = []
-            elif bare_line[0].isalpha():
-                column_map = extract_column_map(heading_row_text=bare_line)
-            elif bare_line[0].isdigit() and len(column_map) > 0:
-                method_location, complexity = \
-                    extract_complexity(method_line=bare_line, column_map=column_map)
-                record_method(complexity_dict, method_location, complexity)
+    for line_fields in parsed_lines:
+        func_complexity = \
+            lizard_fields_to_function_complexity(line_fields)
+        complexity_dict.update(func_complexity)
     return complexity_dict
 
 
@@ -86,9 +50,15 @@ def new_complexity_is_ok(new_complexity_limit,
     return complexity_is_ok
 
 
-def new_report_is_ok(new_complexity_limit, new_report_txt_filename, reference_report_txt_filename):
-    new_methods_complexity = map_methods_complexity(new_report_txt_filename)
-    reference_methods_complexity = map_methods_complexity(reference_report_txt_filename)
+def map_methods_complexity(report_csv_filename):
+    with open(report_csv_filename, 'r') as report:
+        csv_reader = csv.reader(report)
+        return fields_to_complexity_map(csv_reader)
+
+
+def new_report_is_ok(new_complexity_limit, new_report_csv_filename, reference_report_csv_filename):
+    new_methods_complexity = map_methods_complexity(new_report_csv_filename)
+    reference_methods_complexity = map_methods_complexity(reference_report_csv_filename)
     return new_complexity_is_ok(new_complexity_limit,
                                 new_methods_complexity, reference_methods_complexity)
 
@@ -96,7 +66,7 @@ def new_report_is_ok(new_complexity_limit, new_report_txt_filename, reference_re
 def print_usage_and_exit():
     print(f'''
 Usage:
-{sys.argv[0]} <complexity-limit new code> <new report txt> <reference report txt>''')
+{sys.argv[0]} <complexity-limit new code> <new report csv> <reference report csv>''')
     sys.exit(1)
 
 
@@ -110,8 +80,8 @@ if __name__ == '__main__':
     except ValueError:
         print_usage_and_exit()
 
-    if new_report_is_ok(new_complexity_limit=complexity_limit, new_report_txt_filename=sys.argv[2],
-                        reference_report_txt_filename=sys.argv[3]):
+    if new_report_is_ok(new_complexity_limit=complexity_limit, new_report_csv_filename=sys.argv[2],
+                        reference_report_csv_filename=sys.argv[3]):
         sys.exit(0)
     else:
         sys.exit(1)
