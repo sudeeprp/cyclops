@@ -5,7 +5,7 @@ copy /y baseline-java.java current-java.java >nul
 lizard current-java.java -o reference-report.csv
 
 rem Some changes have been made. Measure again
-copy /y baseline-java-improved-with-badnew.java current-java.java >nul
+copy /y baseline-java-with-improvements-and-new-complex-code.java current-java.java >nul
 lizard current-java.java -o new-report.csv
 
 rem Check if the measurement is ok

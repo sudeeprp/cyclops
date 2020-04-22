@@ -37,11 +37,13 @@ def get_method_complexity(method_name, complexity_dict):
 
 def new_complexity_is_ok(new_complexity_limit,
                          new_methods_complexity, reference_methods_complexity):
+    if not new_methods_complexity:
+        return False
     complexity_is_ok = True
     for method in new_methods_complexity:
         reference_complexity = get_method_complexity(method, reference_methods_complexity)
         new_complexity = new_methods_complexity[method]
-        if  new_complexity > new_complexity_limit and new_complexity > reference_complexity:
+        if new_complexity > new_complexity_limit and new_complexity > reference_complexity:
             print(f'\n{method} complexity is {new_complexity}')
             if reference_complexity > 0:
                 print(f'It was {reference_complexity}')

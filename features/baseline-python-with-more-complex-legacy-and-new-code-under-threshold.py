@@ -1,3 +1,4 @@
+
 def simple(a):
     a += 1
 

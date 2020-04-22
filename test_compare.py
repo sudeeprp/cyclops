@@ -2,7 +2,7 @@ import unittest
 import comparecyclo
 
 class ComparisonTestCase(unittest.TestCase):
-    def test_lizard_fields_are_mapped(self):
+    def test_functions_with_different_params_are_treated_different(self):
         lizard_fields = [
             [0, 1, 2, 3, 4, "dont-care", "filename.ext", "function_name", "function_name( p1, p2 )", 9, 10], # pylint: disable=line-too-long
             [0, 10, 0, 0, 0, "dont-care", "filename.ext", "function_name", "function_name( p1 )", 0, 0]      # pylint: disable=line-too-long
@@ -50,10 +50,16 @@ class ComparisonTestCase(unittest.TestCase):
                          reference_methods_complexity={'good1()': 2}))
 
     def test_when_worse_than_reference_then_limit_exceeded_is_not_ok(self):
-        self.assertFalse((comparecyclo.new_complexity_is_ok
-                          (new_complexity_limit=2,
-                           new_methods_complexity={'good_becomes_bad(int r)': 4},
-                           reference_methods_complexity={'good_becomes_bad(int r)': 3})))
+        self.assertFalse(comparecyclo.new_complexity_is_ok
+                         (new_complexity_limit=2,
+                          new_methods_complexity={'good_becomes_bad(int r)': 4},
+                          reference_methods_complexity={'good_becomes_bad(int r)': 3}))
+
+    def test_when_source_missing_and_new_report_empty_then_not_ok(self):
+        self.assertFalse(comparecyclo.new_complexity_is_ok
+                         (new_complexity_limit=2,
+                          new_methods_complexity={},
+                          reference_methods_complexity={}))
 
 
 if __name__ == '__main__':
